@@ -2,8 +2,9 @@ import fitz
 import re
 import json
 import os
+import sys
 
-def process_entire_pdf(pdf_path, start_page, end_page, output_folder="imagenes"):
+def process_entire_pdf(pdf_path, output_folder, start_page, end_page):
     os.makedirs(output_folder, exist_ok=True)
     
     doc = fitz.open(pdf_path)
@@ -16,6 +17,7 @@ def process_entire_pdf(pdf_path, start_page, end_page, output_folder="imagenes")
         page = doc.load_page(page_num)
 
         imagenes_por_pagina = page.get_images(full=True)
+        nombres_imagenes = []
         for i, img in enumerate(imagenes_por_pagina):
             xref = img[0]
             base_image = doc.extract_image(xref)
@@ -28,15 +30,19 @@ def process_entire_pdf(pdf_path, start_page, end_page, output_folder="imagenes")
             with open(ruta, "wb") as f:
                 f.write(image_bytes)
 
-            print(f"Guardada: {ruta}")
+            nombres_imagenes.append(nombre_imagen)
 
         text = page.get_text()
         text = text.replace('\xa0', ' ')
         text = text.replace('\r\n', '\n')
 
         exercises_on_page = procesar_pagina_calistenia(text)
+
         for i, ex in enumerate(exercises_on_page):
-            ex['image'] = f"pagina{page_num+1}_img{i+1}.{extension}"
+            if i < len(nombres_imagenes):
+                ex["image"] = nombres_imagenes[i]
+            else: 
+                ex["image"] = None
         every_exercise.extend(exercises_on_page)
 
     doc.close()
@@ -143,5 +149,13 @@ def procesar_pagina_calistenia(texto_pagina):
 
     return resultados
         
-resultados = process_entire_pdf("GuiaCalistenia.pdf", 21, 31)
-print(json.dumps(resultados, indent=4, ensure_ascii=False))
+sys.stdout.reconfigure(encoding='utf-8')
+
+if __name__ == "__main__":
+    pdf_path = sys.argv[1]
+    output_folder = sys.argv[2]
+    start_page = int(sys.argv[3])
+    end_page = int(sys.argv[4])
+
+    resultados = process_entire_pdf(pdf_path, output_folder, start_page, end_page)
+    print(json.dumps(resultados, ensure_ascii=False))
