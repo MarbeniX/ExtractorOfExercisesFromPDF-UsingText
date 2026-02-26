@@ -74,19 +74,24 @@ def procesar_pagina_calistenia(texto_pagina):
 
     # --- PASO 1: LIMPIEZA ---
     texto_limpio = texto_pagina.replace('\xa0', ' ')
+    # print(texto_limpio)
 
     # --- PASO 2: SEGMENTACIÓN CORRECTA ---
     # Dividimos cuando empieza un nuevo ejercicio
-    bloques_crudos = re.split(
-        r'\n(?=[A-ZÁÉÍÓÚÑ\s]+\n\s*\nDIFICULTAD:)',
-        texto_limpio
+    bloques_crudos = re.findall(
+        r'([A-ZÁÉÍÓÚÑ\s]+?\n\s*\nDIFICULTAD:.*?)(?=\n[A-ZÁÉÍÓÚÑ\s]+\n\s*\nDIFICULTAD:|\Z)',
+        texto_limpio,
+        re.DOTALL
     )
+    # print(bloques_crudos)
 
     # Nos quedamos solo con bloques válidos
     bloques_crudos = [
         b.strip() for b in bloques_crudos
         if "DIFICULTAD:" in b and "MÚSCULOS IMPLICADOS:" in b
     ]
+    # print(bloques_crudos)
+    
 
     resultados = []
 
